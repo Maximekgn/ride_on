@@ -1,22 +1,46 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import {  DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import "react-native-reanimated";
+import "./global.css";
+import { useIsFirstOpen } from "@/store/general";
+import { useEffect, useState } from "react";
+import * as SplashScreen from "expo-splash-screen";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+// Bloquer le splash screen au démarrage
+SplashScreen.preventAutoHideAsync();
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const isFirstOpen = useIsFirstOpen();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    // Timer pour laisser le splash quelques secondes
+    const timer = setTimeout(async () => {
+      setReady(true);
+      await SplashScreen.hideAsync(); // cacher le splash
+    }, 3000); // 3000ms = 3 secondes
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!ready) {
+    // On ne rend rien tant que le splash est visible
+    return null;
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        {isFirstOpen ? (
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+        ) : (
+          <>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            
+          </>
+        )}
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
